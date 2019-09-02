@@ -3,19 +3,44 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-import mptt.fields
+import picklefield.fields
+import taggit.managers
 import swapper
 
 
 class Migration(migrations.Migration):
     dependencies = [
+        ('taggit', '0003_taggeditem_add_unique_index'),
         ('dataframe_store', '0001_initial'),
+        swapper.dependency('dataframe_store', 'DbDataFrame'),
     ]
 
     operations = [
+        migrations.CreateModel(
+            name='DbDataFrame',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=255)),
+                ('description', models.TextField(blank=True, max_length=3000)),
+                ('obj', picklefield.fields.PickledObjectField(editable=False)),
+                ('shape_x', models.IntegerField()),
+                ('shape_y', models.IntegerField()),
+                ('lft', models.PositiveIntegerField(db_index=True, editable=False)),
+                ('rght', models.PositiveIntegerField(db_index=True, editable=False)),
+                ('tree_id', models.PositiveIntegerField(db_index=True, editable=False)),
+                ('level', models.PositiveIntegerField(db_index=True, editable=False)),
+            ],
+            options={
+                'verbose_name_plural': 'dataframes',
+                'verbose_name': 'dataframe',
+                'abstract': False,
+                'swappable': swapper.swappable_setting('dataframe_store', 'DbDataFrame')
+            },
+        ),
         migrations.AddField(
             model_name='dbdataframe',
-            name='parent',
-            field=mptt.fields.TreeForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=swapper.get_model_name('dataframe_store', 'DbDataFrame')),
+            name='tags',
+            field=taggit.managers.TaggableManager(blank=True, help_text='A comma-separated list of tags.', through='taggit.TaggedItem', to='taggit.Tag', verbose_name='Tags'),
         ),
     ]
+
